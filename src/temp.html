@@ -1,0 +1,1270 @@
+<%@page	import="egovframework.klic.ptl.util.Utils"%>
+<%@page import="java.util.*"%>
+<%@page contentType="text/html; charset=UTF-8"%>
+<%@page	import="egovframework.klic.ptl.framework.user.UserContainer"%>
+<%@page	import="egovframework.klic.ptl.VO.apple.UsersVO"%>
+<%@page	import="egovframework.klic.addon.rec.recMgt.VO.RecMgtVO"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="ui" uri="http://egovframework.gov/ctl/ui"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+
+
+<%
+String	path		=	(String)request.getContextPath();
+String	strSearch	=	Utils.getHTMLString(request.getParameter("searchStr"));
+String	strSearch2	=	Utils.getHTMLString(request.getParameter("searchStr2"));
+
+if(strSearch == null || strSearch.equals("null"))
+{
+strSearch	=	(String)session.getAttribute("searchStr");
+if(strSearch == null ||  strSearch.equals("null"))
+strSearch	= "";
+}
+
+if(strSearch2 == null || strSearch2.equals("null") || strSearch2 == "")
+{
+strSearch2	=	(String)session.getAttribute("searchStr2");
+if(strSearch2 == null ||  strSearch2.equals("null"))
+strSearch2	= "";
+}
+
+List	recList		=	(List)request.getAttribute("recList");
+List	recSearchList		=	(List)request.getAttribute("recSearchList");
+
+UserContainer userContainer	=	(UserContainer)session.getAttribute("userContainer");
+boolean bIsMgtAuth = false;
+if(userContainer != null ) {
+if ( userContainer.hasAuth("apple=1") ||  userContainer.hasAuth("30000=200") ||  userContainer.hasAuth("10000=481") ) {
+bIsMgtAuth=true;
+}
+}
+//사무분장권한있을시 권한부여
+if (userContainer!=null && ( userContainer.hasAuth("apple=1") ||
+userContainer.hasAuth("10000=320") || userContainer.hasAuth("10000=425") ||
+userContainer.hasAuth("10000=418") || userContainer.hasAuth("10000=419") ||
+userContainer.hasAuth("10000=420") || userContainer.hasAuth("10000=421") ||
+userContainer.hasAuth("10000=422") || userContainer.hasAuth("10000=423") ||
+userContainer.hasAuth("10000=424") || userContainer.hasAuth("10000=426") ||
+userContainer.hasAuth("10000=427") || userContainer.hasAuth("10000=434") ||
+userContainer.hasAuth("10000=499") || userContainer.hasAuth("10000=531") ||
+userContainer.hasAuth("10000=492")  || userContainer.hasAuth("10000=379")
+) ) {
+bIsMgtAuth = true;
+}
+
+//bIsMgtAuth=false;
+int count = 0;
+%>
+
+
+<SCRIPT LANGUAGE="JavaScript">
+    <!--
+    function goCntsInsert() {
+        if (document.cntsMgtForm.cnts1.value == "") {
+            alert("사전공개목록을 입력하세요.");
+            return false;
+        }
+        document.cntsMgtForm.action = "<%=path%>/rec/insert/0202.do?s=rec&m=0202";
+        document.cntsMgtForm.submit();
+    }
+    function goCntsMod() {
+        if (document.cntsMgtForm.seq.value == "") {
+            alert("사전공개목록을 선택하세요.");
+            return false;
+        }else if (document.cntsMgtForm.cnts1.value == "") {
+            alert("사전공개목록을 입력하세요.");
+            return false;
+        }
+        document.cntsMgtForm.action = "<%=path%>/rec/mod/0202.do?s=rec&m=0202";
+        document.cntsMgtForm.submit();
+    }
+    function goCntsDel() {
+        if (document.cntsMgtForm.seq.value == "") {
+            alert("사전공개목록을 선택하세요.");
+            return false;
+        }
+        document.cntsMgtForm.action = "<%=path%>/rec/del/0202.do?s=rec&m=0202";
+        document.cntsMgtForm.submit();
+    }
+    function goCntsCan(){
+        document.getElementById("viewLst").classList.remove("display_hid");
+
+        document.getElementById("cntsTb").classList.add("display_hid");
+    }
+    function goListMod (seq,cntsType,recCD,ord,cnts1,cnts2,cnts3,cnts4,usrNM,phone,cnts5) {
+        var forms = document.cntsMgtForm;
+
+        forms.seq.value=seq;
+        forms.cntsType.value=cntsType;
+        forms.recCD.value=recCD;
+        forms.ord.value=ord;
+        forms.cnts1.value=cnts1;
+        forms.cnts2.value=cnts2;
+        forms.cnts3.value=cnts3;
+        forms.cnts4.value=cnts4;
+        forms.usrNM.value=usrNM;
+        forms.phone.value=phone;
+        forms.cnts5.value=cnts5;
+
+        if (document.cntsMgtForm.seq.value == "") {
+            alert("사전공개목록을 선택하세요.");
+            return false;
+        }
+
+        document.getElementById("viewLst").classList.add("display_hid");
+
+        document.getElementById("cntsTb").classList.remove("display_hid");
+    }
+    function goCntsExcel()
+    {
+        var forms = document.cntsMgtForm;
+
+        if(forms.cntsTypeDept.value == "All"){
+            alert("부서를 선택하세요.");
+            forms.cntsTypeDept.focus();
+            return false;
+        }
+        forms.action = "<%=path%>/rec/recExcel.do?menuID=0202&s=rec";
+        forms.submit();
+    }
+    function goCntsExcelAll()
+    {
+        var forms = document.cntsMgtForm;
+
+        forms.cntsTypeDept.value="All";
+        forms.action = "<%=path%>/rec/recExcelAll.do?menuID=0202&s=rec";
+        forms.submit();
+    }
+
+    function onTab(subNum)
+    {
+        var strSc = "<%=strSearch%>";
+        var imgChange;
+
+        if (strSc != "" )
+        {
+            location.href = location.href;
+        }
+        else{
+            for(var i=1; i<=26; i++){
+                if(document.getElementById("sub"+i) != null){
+                    document.getElementById("sub"+i).style.display = "none";
+                }
+
+                if(i != 12 && i != 14){
+                    imgChange = document.getElementById('tab'+i);
+                    if(imgChange != null){
+                        if(imgChange.src.indexOf('_off') == -1) {
+                            imgChange.src = imgChange.src.replace('_on.gif','_off.gif');
+                        }
+                    }
+                }
+            }
+            document.getElementById("sub"+subNum).style.display = "block";
+
+            /* imgChange = document.getElementById('tab'+subNum);
+
+            if(imgChange.src.indexOf('_off') == -1) {
+                imgChange.src = imgChange.src.replace('_on.gif','_off.gif');
+            }else{
+                imgChange.src = imgChange.src.replace('_off.gif','_on.gif');
+            } */
+        }
+    }
+
+    function searchContent()
+    {
+        var forms = document.cntsMgtForm;
+        var searchStr =forms.searchStr.value;
+        var searchStr2 =forms.searchStr2.value;
+        if(searchStr2 != ""){
+            forms.action = "<%=path%>/rec/0202_01.do?m=1002&s=dje";
+            forms.submit();
+        }else{
+            alert("구분을 선택해 주세요.");
+        }
+    }
+    function onContent()
+    {
+        if( event.keyCode == 13)  searchContent();
+    }
+
+
+    //-->
+</SCRIPT>
+
+<form name="cntsMgtForm" method="post"  action="<%=path%>/rec/mod/0202.do">
+
+    <div id="viewLst">
+        <!-- 20191007 추가 -->
+
+        <div class="tab_Ty3">
+            <ul class="li_2">
+                <li><a href="/rec/0202.do?m=100201&s=dje"><span>부서별공표</span></a></li>
+                <li class="on"><a href="/rec/0202_01.do?m=100201&s=dje" rel="noopener noreferrer"><span>주제별공표</span></a></li>
+            </ul>
+        </div>
+
+        <div class="box_Ty1">
+            <h2 class="tit1">사전정보공표란?</h2>
+            <p>정보공개 청구가 없더라도 우리 교육청에서 어떤 일을 하고 있는 지를 국민들이 알 수 있도록 관련 정보를 미리 정하여 공표하는 제도입니다.</p>
+            <p class="mgt10"><span class="col_blue">정보공개담당 : 총무과(042-616-8582)</span></p>
+        </div>
+
+        <!-- 리스트 검색 -->
+        <div class="search_c">
+            <div class="search_c_w">
+                <p> · 공표정보 검색</p>
+                <select name="searchStr2" title="검색구분">
+                    <option value="" selected="">선택하세요</option>
+                    <option value="CNTS1">사전공개목록</option>
+                    <option value="CNTS2">공개항목</option>
+                    <option value="CNTS3">시기</option>
+                    <option value="CNTS4">주기</option>
+                    <option value="USR_NM">담당부서</option>
+                </select>
+                <input name="searchStr" type="text" title="검색" value="<%=strSearch%>" onkeyup="onContent()">
+                <a href="#search" onclick="javascript:searchContent()" title="검색" class="search_btn">검색</a> </div>
+        </div>
+
+
+        <h2 class="tit2 cboth">주제별 공표주제</h2>
+
+        <ul class="tab_list">
+            <li><a href="#sub16" onClick="javascript:onTab('16');return false" title="교육계획,입학,진학"><img id="tab16" src="<%=path%>/images/rec/sub/tab01_01_off.gif" alt="교육계획, 입학,진학" /></a></li>
+            <li><a href="#sub17" onClick="javascript:onTab('17');return false" title="영재교육,특성화고"><img id="tab17" src="<%=path%>/images/rec/sub/tab01_02_off.gif" alt="영재교육, 특성화고" /></a></li>
+            <li><a href="#sub18" onClick="javascript:onTab('18');return false" title="학교체육,급식,보건"><img id="tab18" src="<%=path%>/images/rec/sub/tab01_03_off.gif" alt="학교체육,  급식, 보건" /></a></li>
+            <li><a href="#sub19" onClick="javascript:onTab('19');return false" title="생활지도ㆍ안전,학교폭력"><img id="tab19" src="<%=path%>/images/rec/sub/tab01_04_off.gif" alt="생활지도ㆍ 안전, 학교폭력" /></a></li>
+            <li><a href="#sub20" onClick="javascript:onTab('20');return false" title="교육복지"><img id="tab20" src="<%=path%>/images/rec/sub/tab01_05_off.gif" alt="교육복지" /></a></li>
+            <li><a href="#sub21" onClick="javascript:onTab('21');return false" title="학원ㆍ교습소,평생교육"><img id="tab21" src="<%=path%>/images/rec/sub/tab01_06_off.gif" alt="학원ㆍ교습소, 평생교육" /></a></li>
+            <li><a href="#sub22" onClick="javascript:onTab('22');return false" title=""><img id="tab22" src="<%=path%>/images/rec/sub/tab01_07_off.gif" alt="임용시험, 검정고시" /></a></li>
+            <li><a href="#sub23" onClick="javascript:onTab('23');return false" title="예ㆍ결산,계약,공사"><img id="tab23" src="<%=path%>/images/rec/sub/tab01_08_off.gif" alt="예ㆍ결산, 계약,공사" /></a></li>
+            <li><a href="#sub24" onClick="javascript:onTab('24');return false" title="감사정보,계약공사"><img id="tab24" src="<%=path%>/images/rec/sub/tab01_09_off.gif" alt="감사정보, 계약공사" /></a></li>
+            <li><a href="<%=path%>/boardCnts/list.do?boardID=1067&menuID=0208" title="정보공개청구내용"><img src="<%=path%>/images/rec/sub/tab01_10_off.gif" alt="정보공개청구공개항목" /></a></li>
+            <li><a href="#sub25" onClick="javascript:onTab('25');return false" title="그 밖의 필요정보"><img id="tab25" src="<%=path%>/images/rec/sub/tab01_11_off.gif" alt="그 밖의 필요정보" /></a></li>
+        </ul>
+
+        <p class="empty clear"></p>
+
+        <%-- <h6 class="tit_bullet">부서별 공표</h6>
+        <ul class="tab_list02">
+            <li><a href="#sub15" onClick="javascript:onTab('15');return false" title="공보관" ><img id="tab15" src="<%=path%>/images/rec/sub/tab02_01_off.gif" alt="공보관" /></a></li>
+            <li><a href="#sub3" onClick="javascript:onTab('3');return false" title="감사관" ><img id="tab3" src="<%=path%>/images/rec/sub/tab02_03_off.gif" alt="감사관" /></a></li>
+            <li><a href="#sub2" onClick="javascript:onTab('2');return false" title="기획조정관"><img id="tab2" src="<%=path%>/images/rec/sub/tab02_02_off.gif" alt="기획조정관" /></a></li>
+            <li><a href="#sub27" onClick="javascript:onTab('27');return false" title="기획예산과" ><img id="tab27" src="<%=path%>/images/rec/sub/tab02_16_off.gif" alt="기획예산과" /></a></li>
+            <li><a href="#sub28" onClick="javascript:onTab('28');return false" title="혁신정책과" ><img id="tab28" src="<%=path%>/images/rec/sub/tab02_17_off.gif" alt="혁신정책과" /></a></li>
+            <li><a href="#sub29" onClick="javascript:onTab('29');return false" title="교육복지안전과" ><img id="tab29" src="<%=path%>/images/rec/sub/tab02_18_off.gif" alt="교육복지안전과" /></a></li>
+            <li><a href="#sub30" onClick="javascript:onTab('1');return false" title="교육정책과"><img id="tab30" src="<%=path%>/images/rec/sub/tab02_04_off.gif" alt="교육정책과" /></a></li>
+            <li><a href="#sub4" onClick="javascript:onTab('4');return false" title="유초등교육과" ><img id="tab4" src="<%=path%>/images/rec/sub/tab02_05_off.gif" alt="유초등교육과" /></a></li>
+            <li><a href="#sub5" onClick="javascript:onTab('5');return false" title="중등교육과" ><img id="tab5" src="<%=path%>/images/rec/sub/tab02_06_off.gif" alt="중등교육과" /></a></li>
+            <li><a href="#sub6" onClick="javascript:onTab('6');return false" title="과학직업정보과"><img id="tab6" src="<%=path%>/images/rec/sub/tab02_07_off.gif" alt="과학직업정보과" /></a></li>
+            <li><a href="#sub7" onClick="javascript:onTab('7');return false" title="체육예술건강과"><img id="tab7" src="<%=path%>/images/rec/sub/tab02_08_off.gif" alt="체육예술건강과" /></a></li>
+            <li><a href="#sub13" onClick="javascript:onTab('13');return false" title="학생생활교육과"><img id="tab13" src="<%=path%>/images/rec/sub/tab02_09_off.gif" alt="학생생활교육과" /></a></li>
+            <li><a href="#sub8" onClick="javascript:onTab('8');return false" title="총무과" ><img id="tab8" src="<%=path%>/images/rec/sub/tab02_10_off.gif" alt="총무과" /></a></li>
+            <li><a href="#sub26" onClick="javascript:onTab('26');return false" title="안전총괄과" ><img id="tab26" src="<%=path%>/images/rec/sub/tab02_11_off.gif" alt="안전총괄과" /></a></li>
+            <li><a href="#sub9" onClick="javascript:onTab('9');return false" title="행정과" ><img id="tab9" src="<%=path%>/images/rec/sub/tab02_12_off.gif" alt="행정과" /></a></li>
+            <li><a href="#sub10" onClick="javascript:onTab('10');return false" title="재정과" ><img id="tab10" src="<%=path%>/images/rec/sub/tab02_13_off.gif" alt="재정과" /></a></li>
+            <li><a href="#sub11" onClick="javascript:onTab('11');return false" title="시설과" ><img id="tab11" src="<%=path%>/images/rec/sub/tab02_14_off.gif" alt="시설과" /></a></li>
+            <li><a href="#sub14" onClick="javascript:onTab('14');return false" title="부서공통" ><img id="tab14" src="<%=path%>/images/rec/sub/tab02_31_off.gif" alt="부서공통" /></a></li>
+        </ul>
+
+        <p class="empty"></p>
+        <p class="empty"></p> --%>
+
+
+
+
+        <%if(strSearch != "") { session.removeAttribute("searchStr"); session.removeAttribute("searchStr2");%>
+        <!-- 검색 -->
+        <div id="search">
+            <h6 class="tit2">검색</h6>
+
+            <!-- table -->
+            <table cellspacing="0" class="tblTy1" summary="검색">
+                <caption>검색</caption>
+                <colgroup>
+                    <col width="172px;" />
+                    <col width="236px;" />
+                    <col width="89px;" />
+                    <col width="106px;" />
+                    <col width="106px;" />
+                    <col width="97px;" />
+                </colgroup>
+                <thead>
+                <tr>
+                    <th scope="col">사전공개목록</th>
+                    <th scope="col">공개항목</th>
+                    <th scope="col">시기</th>
+                    <th scope="col">주기</th>
+                    <th scope="col">방법</th>
+                    <th scope="col">담당부서</th>
+                </tr>
+                </thead>
+                <tbody>
+                <% if (recSearchList!=null) {
+                for(int i=0;i<recSearchList.size();i++)
+                {
+                RecMgtVO cntsSearch = (RecMgtVO)recSearchList.get(i);
+
+                %>
+                <tr>
+                    <td class="text_l"><% if(cntsSearch.getCnts1()!=null) { %><%=cntsSearch.getCnts1()%><% } %></td>
+                    <td class="text_l">
+                        <% if(cntsSearch.getCnts2()!=null) { if(cntsSearch.getCnts5()!=null) { %>
+                        <a href="<%=cntsSearch.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cntsSearch.getCnts2()%></a>
+                        <% }else{ %>
+                        <%=cntsSearch.getCnts2()%>
+                        <% }} %>
+                    </td>
+                    <td class="text_c"><% if(cntsSearch.getCnts3()!=null) { %><%=cntsSearch.getCnts3()%><% } %></td>
+                    <td class="text_c"><% if(cntsSearch.getCnts4()!=null) { %><%=cntsSearch.getCnts4()%><% } %></td>
+                    <td class="text_c">누리집</td>
+                    <%-- <td class="text_c"><% if(cntsSearch.getCnts5()!=null) { %><a href="<%=cntsSearch.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                    <td class="bd_none"><% if(cntsSearch.getUsrNM()!=null) { %><%=cntsSearch.getUsrNM()%><% } %><br /><% if(cntsSearch.getPhone()!=null) { %><%=cntsSearch.getPhone()%><% } %></td>
+                </tr>
+                <%
+                } }
+                %>
+                </tbody>
+            </table>
+            <!-- // table -->
+            <p class="empty"></p>
+            <p class="empty"></p>
+        </div>
+        <!--//검색 -->
+
+        <%}%>
+
+
+        <%if(strSearch == null || strSearch.equals("null") || strSearch == "") {%>
+
+        <!--12 주요정보공표목록 -->
+        <div id="sub12">
+            <h2 class="tit2 cboth mgt40">주요정보공표목록</h2>
+            <!-- table -->
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="주요정보공표목록">
+                    <caption>주요정보공표목록</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col" class="bd_none">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getCntsType() != null && cnts.getCntsType().equals("12")) {
+                    count++;
+                    %>
+                    <!-- 권한 목록 -->
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <!-- 권한 목록 -->
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//주요정보공표목록 -->
+
+        <!--16교육계획.입학.진학-->
+        <div id="sub16">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">교육계획.입학.진학</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="교육계획.입학.진학">
+                    <caption>교육계획.입학.진학</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("16")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//교육계획.입학.진학 -->
+
+
+
+        <!--17영재교육,특성화고-->
+        <div id="sub17">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">영재교육,특성화고</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="영재교육,특성화고">
+                    <caption>영재교육,특성화고</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("17")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//영재교육,특성화고 -->
+
+
+        <!--18학교체육,급식,보건-->
+        <div id="sub18">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">학교체육,급식,보건</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="학교체육,급식,보건">
+                    <caption>학교체육,급식,보건</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("18")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//학교체육,급식,보건 -->
+
+
+
+        <!--19생활지도ㆍ안전,학교폭력-->
+        <div id="sub19">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">생활지도ㆍ안전,학교폭력</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="생활지도ㆍ안전,학교폭력">
+                    <caption>생활지도,안전,학교폭력</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("19")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//생활지도ㆍ안전,학교폭력 -->
+
+
+
+
+        <!--20교육복지-->
+        <div id="sub20">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">교육복지</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="교육복지">
+                    <caption>교육복지</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("20")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//교육복지 -->
+
+
+
+        <!--21학원ㆍ교습소,평생교육-->
+        <div id="sub21">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">학원ㆍ교습소,평생교육</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="학원ㆍ교습소,평생교육">
+                    <caption>학원ㆍ교습소,평생교육</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("21")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//학원ㆍ교습소,평생교육 -->
+
+
+        <!--22임용시험,검정고시-->
+        <div id="sub22">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">임용시험,검정고시</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="임용시험,검정고시">
+                    <caption>임용시험,검정고시</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("22")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <<%-- td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//임용시험,검정고시 -->
+
+
+
+        <!--23예ㆍ결산,계약,공사-->
+        <div id="sub23">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">예ㆍ결산,계약,공사</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="예ㆍ결산,계약,공사">
+                    <caption>예ㆍ결산,계약,공사</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("23")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//예ㆍ결산,계약,공사 -->
+
+
+        <!--24감사정보,계약공사-->
+        <div id="sub24">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">감사정보,계약공사</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="감사정보,계약공사">
+                    <caption>감사정보,계약공사</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("24")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//감사정보,계약공사 -->
+
+
+        <!--25그 밖의 필요정보-->
+        <div id="sub25">
+            <h2 class="tit2 cboth mgt40">주제명 : <span class="col_blue">그 밖의 필요정보</span></h2>
+            <div class="tblTy1">
+                <table cellspacing="0"  summary="그 밖의 필요정보">
+                    <caption>그 밖의 필요정보</caption>
+                    <colgroup>
+                        <col width="26px;" class="mo_hid"/>
+                        <col width="172px;" class="mo_hid"/>
+                        <col width="236px;" />
+                        <col width="89px;" class="mo_hid"/>
+                        <col width="80px;" class="mo_hid"/>
+                        <col width="106px;" class="mo_hid"/>
+                        <col width="97px;" />
+                    </colgroup>
+                    <thead>
+                    <tr>
+                        <th scope="col" class="mo_hid">순서</th>
+                        <th scope="col" class="mo_hid">사전공개목록</th>
+                        <th scope="col">공개항목</th>
+                        <th scope="col" class="mo_hid">시기</th>
+                        <th scope="col" class="mo_hid">주기</th>
+                        <th scope="col" class="mo_hid">방법</th>
+                        <th scope="col">담당부서</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <%
+                    count = 0;
+                    for(int i=0;i<recList.size();i++)
+                    {
+                    RecMgtVO cnts = (RecMgtVO)recList.get(i);
+                    if(cnts.getRecCD() != null && cnts.getRecCD().equals("25")) {
+                    count++;
+                    %>
+                    <% if (bIsMgtAuth) {%>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><a href="#ord" onclick="goListMod('<%=cnts.getSeq()%>','<%=cnts.getCntsType()%>','<%=cnts.getRecCD()%>','<%=cnts.getOrd()%>','<%=cnts.getCnts1()%>','<%=cnts.getCnts2()%>','<%=cnts.getCnts3()%>','<%=cnts.getCnts4()%>','<%=cnts.getUsrNM()%>','<%=cnts.getPhone()%>','<%=cnts.getCnts5()%>')" onkeypress='' title="<%=cnts.getCnts1()%> 수정"><%=cnts.getCnts1()%></a><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% }  else { %>
+                    <tr>
+                        <td class="mo_hid"><%=count%></td>
+                        <td class="text_l mo_hid"><% if(cnts.getCnts1()!=null) { %><%=cnts.getCnts1()%><% } %></td>
+                        <td class="text_l"><% if(cnts.getCnts2()!=null) { if(cnts.getCnts5()!=null) {%><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><%=cnts.getCnts2()%></a><% }else{ %><%=cnts.getCnts2()%><% }} %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts3()!=null) { %><%=cnts.getCnts3()%><% } %></td>
+                        <td class="text_c mo_hid"><% if(cnts.getCnts4()!=null) { %><%=cnts.getCnts4()%><% } %></td>
+                        <td class="text_c mo_hid">누리집</td>
+                        <%-- <td class="text_c"><% if(cnts.getCnts5()!=null) { %><a href="<%=cnts.getCnts5()%>" target="_blank" title="누리집 바로가기"><img src="<%=path%>/images/rec/board/btn_linkgo_03.gif"  alt="누리집 바로가기" /></a><% } %></td> --%>
+                        <!-- <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %><br /><% if(cnts.getPhone()!=null) { %><%=cnts.getPhone()%><% } %></td> -->
+                        <td class="bd_none"><% if(cnts.getUsrNM()!=null) { %><%=cnts.getUsrNM()%><% } %></td>
+                    </tr>
+                    <% } %>
+                    <%
+                    }
+                    }
+                    %>
+                    </tbody>
+                </table>
+                <!-- // table -->
+                <p class="empty"></p>
+                <p class="empty"></p>
+            </div>
+        </div>
+        <!--//그 밖의 필요정보 -->
+    </div>
+
+    <% if (bIsMgtAuth) {%>
+    <input type="hidden" class="input" name="seq" value="0" />
+
+    <input type="hidden" class="input" name="menuID" value="02" />
+    <input type="hidden" class="input" name="menuSub" value="02" />
+
+    <input type="hidden" class="input" name="cnts6" value="" />
+    <input type="hidden" class="input" name="cnts7" value="" />
+    <input type="hidden" class="input" name="cnts8" value="" />
+    <input type="hidden" class="input" name="cnts9" value="" />
+    <input type="hidden" class="input" name="cntsDesc" value="" />
+    <input type="hidden" class="input" name="usrID" value="" />
+
+    <input type="file" class="input" name="filepath" value="" title="파일1" style="display:none;"/>
+    <input type="file" class="input" name="filepath2" value="" title="파일2" style="display:none;"/>
+
+    <table width="100%" class="tblTy1 display_hid" border="0" cellspacing="0" cellpadding="0" id="cntsTb">
+        <tr>
+            <th>부서별 구분</th>
+            <td style="border-right:none;"><select name="cntsType" title="부서별 구분">
+                <option value="15" selected>공보관</option>
+                <!-- <option value="2">기획조정관</option> -->
+                <option value="3">감사관실</option>
+                <option value="27">기획예산과</option>
+                <option value="28">혁신정책과</option>
+                <option value="29">교육복지안전과</option>
+                <option value="1">교육정책과</option>
+                <option value="4">유초등교육과</option>
+                <option value="5">중등교육과</option>
+                <option value="6">과학직업정보과</option>
+                <option value="7">체육예술건강과</option>
+                <option value="13">민주시민교육과</option>
+                <option value="8">총무과</option>
+                <option value="26">안전총괄과</option>
+                <option value="9">행정과</option>
+                <option value="10">재정과</option>
+                <option value="11">시설과</option>
+                <option value="12">주요정보공표목록</option>
+                <option value="14">부서공통</option>
+            </select></td>
+        </tr>
+        <tr>
+            <th>주제별 구분</th>
+            <td style="border-right:none;"><select name="recCD" title="주제별 구분">
+                <option value="" selected>선택하세요</option>
+                <option value="16">교육계획,입학,진학</option>
+                <option value="17">영재교육,특성화고</option>
+                <option value="18">학교체육,급식,보건</option>
+                <option value="19">생활지도ㆍ안전,학교폭력</option>
+                <option value="20">교육복지</option>
+                <option value="21">학원ㆍ교습소,평생교육</option>
+                <option value="22">임용시험,검정고시</option>
+                <option value="23">예ㆍ결산,계약,공사</option>
+                <option value="24">감사정보,지방의회</option>
+                <option value="25">그 밖의 필요정보</option>
+            </select></td>
+        </tr>
+        <tr>
+            <th>순서</th>
+            <td><input type="text" class="input" id="ord" name="ord" style="width:308px;" value="" maxlength="4" /></td>
+        </tr>
+        <tr>
+            <th>사전공개목록</th>
+            <td><input type="text" class="input" name="cnts1" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>공개항목</th>
+            <td style="border-right:none;"><input type="text" class="input" name="cnts2" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>시기</th>
+            <td style="border-right:none;"><input type="text" class="input" name="cnts3" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>주기</th>
+            <td style="border-right:none;"><input type="text" class="input" name="cnts4" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>방법</th>
+            <td style="border-right:none;"><input type="text" class="input" name="cnts5" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>담당부서</th>
+            <td style="border-right:none;"><input type="text" class="input" name="usrNM" style="width:308px;" value="" /></td>
+        </tr>
+        <tr>
+            <th>연락처</th>
+            <td style="border-right:none;"><input type="text" class="input" name="phone" style="width:308px;" value="" /></td>
+        </tr>
+
+        <tr>
+            <td align="right" style="border:none;padding-right:5px;width:220px;">
+                <a href="#ins" onclick="goCntsInsert();return false;"  onkeypress="" title="저장"><img src='/images/rec/board/btn_save.gif' alt='저장'></a>
+                <a href="#mod" onclick="goCntsMod();return false;" onkeypress="" title="수정"><img src="<%=path%>/images/rec/board/btn_modify.gif" alt="수정"  border="0"/></a>
+                <a href="#del" onclick="goCntsDel();return false;" onkeypress="" title="삭제"><img src="<%=path%>/images/rec/board/btn_delete.gif" alt="삭제"  border="0"/></a>
+                <a href="#can" onclick="goCntsCan();return false;" onkeypress="" title="취소"><img src="<%=path%>/images/rec/board/btn_cancel.gif" alt="취소"  border="0"/></a>
+            </td>
+
+        </tr>
+    </table>
+    <% } %>
+
+
+
+    <% } %>
+</form>
+
